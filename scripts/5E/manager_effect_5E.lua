@@ -2,6 +2,8 @@
 --	  	Copyright © 2023
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
+--
+-- luacheck: globals onInit onClose customGetEffectsByType customHasEffect
 local getEffectsByType = nil;
 local hasEffect = nil;
 
@@ -84,6 +86,7 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
                             if StringManager.contains(DataCommon.dmgtypes, s) or s == 'all' or StringManager.contains(DataCommon.bonustypes, s) or
                                 StringManager.contains(DataCommon.conditions, s) or StringManager.contains(DataCommon.connectors, s) then
                                 -- SKIP
+                                j=j;
                             elseif StringManager.contains(DataCommon.rangetypes, s) then
                                 table.insert(aEffectRangeFilter, s);
                             else
@@ -122,7 +125,7 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
                                 for _, v2 in pairs(aOtherFilter) do
                                     if type(v2) == 'table' then
                                         local bOtherTableMatch = true;
-                                        for k3, v3 in pairs(v2) do
+                                        for _, v3 in pairs(v2) do
                                             if not StringManager.contains(aEffectOtherFilter, v3) then
                                                 bOtherTableMatch = false;
                                                 break

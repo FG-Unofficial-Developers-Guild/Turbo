@@ -2,6 +2,8 @@
 --	  	Copyright © 2023
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
+--
+-- luacheck: globals onInit onClose customGetEffectsByType customHasEffect
 local getEffectsByType = nil;
 local hasEffect = nil;
 
@@ -40,7 +42,7 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
     end
 
     -- Determine effect type targeting
-    local bTargetSupport = StringManager.isWord(sEffectType, DataCommon.targetableeffectcomps);
+    -- local bTargetSupport = StringManager.isWord(sEffectType, DataCommon.targetableeffectcomps);
 
     -- Iterate through effects
     for _, v in pairs(TurboManager.getMatchedEffects(rActor, sEffectType)) do
@@ -111,6 +113,7 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
                             if StringManager.contains(DataCommon.dmgtypes, aComponents[j]) or StringManager.contains(DataCommon.bonustypes, aComponents[j]) or
                                 aComponents[j] == 'all' then
                                 -- Skip
+                                j=j;
                             elseif StringManager.contains(DataCommon.rangetypes, aComponents[j]) then
                                 table.insert(aEffectRangeFilter, aComponents[j]);
                             else
@@ -149,7 +152,7 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
                                 for _, v2 in pairs(aOtherFilter) do
                                     if type(v2) == 'table' then
                                         local bOtherTableMatch = true;
-                                        for k3, v3 in pairs(v2) do
+                                        for _, v3 in pairs(v2) do
                                             if not StringManager.contains(aEffectOtherFilter, v3) then
                                                 bOtherTableMatch = false;
                                                 break

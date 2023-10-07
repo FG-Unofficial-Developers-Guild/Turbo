@@ -2,6 +2,10 @@
 --	  	Copyright © 2023
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
+--
+-- luacheck: globals onInit onClose customGetEffectsByType customHasEffect customIsHiddenFromTarget customHasEffectCondition
+-- luacheck: globals customGetConditionValue customHasEffectCondition customGetConditionValue customGetConditionValueLowest customGetEffectsBonusByType
+
 local getEffectsByType = nil;
 local hasEffect = nil;
 local getConditionValue = nil;
@@ -38,6 +42,7 @@ function onClose()
     EffectManagerPFRPG2.isHiddenFromTarget = isHiddenFromTarget;
 end
 
+-- luacheck: push ignore 561
 -- Added aTraitFilter for saves and bLeaveOneShots for not removing one shot effects
 function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTargetedOnly, aTraitFilter, bLeaveOneShots)
     -- aTraitFilter no long needed?
@@ -95,7 +100,8 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
         end
     end
     GlobalDebug.consoleObjects(
-        'EffectManagerPFRPG2.getEffectsByType.  Done checking for save/skill data.  sSaveType, sInitialResult, isBasicSave, sSkillType, sDistance, aTempFilter, aLocalFilter = ',
+        'EffectManagerPFRPG2.getEffectsByType.  Done checking for save/skill data.  sSaveType, sInitialResult, isBasicSave, sSkillType, sDistance,' ..
+        'aTempFilter, aLocalFilter = ',
         sSaveType, sInitialResult, isBasicSave, sSkillType, sDistance, aTempFilter, aLocalFilter);
 
     -- Set up filters
@@ -118,11 +124,11 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
     GlobalDebug.consoleObjects('EffectManagerPFRPG2.getEffectsByType. Filters aRangeFilter, aOtherFilter = ', aRangeFilter, aOtherFilter);
 
     -- Determine effect type targeting
-    local bTargetSupport = StringManager.isWord(sEffectType, DataCommon.targetableeffectcomps);
+    -- local bTargetSupport = StringManager.isWord(sEffectType, DataCommon.targetableeffectcomps);
 
     -- Iterate through effects
     local aEffectsDBNodes = TurboManager.getMatchedEffects(rActor, sEffectType);
-    local sActorType, nodeActor = ActorManager.getTypeAndNode(rActor);
+    --local sActorType, nodeActor = ActorManager.getTypeAndNode(rActor);
 
     --	local aEffectsDBNodes = DB.getChildren(ActorManager.getCTNode(rActor), "effects");
     --	GlobalDebug.consoleObjects("EffectManagerPFRPG2.getEffectsByType. sActorType, nodeActor = ", sActorType, nodeActor);
@@ -233,20 +239,26 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
                                 (StringManager.contains(DataCommon.dmgtypes, sDamageTypeName) or StringManager.contains(DataCommon.bonustypes, aComponents[j]) or
                                     aComponents[j] == 'all') then
                                 -- Skip
+                                j=j;
                             elseif (rEffectComp.type == 'SAVE' or rEffectComp.type == 'SAVERESULT' or rEffectComp.type == 'SAVEDAMAGEPER') and
                                 (sSaveType == aComponents[j] or sInitialResult == aComponents[j] or
                                     StringManager.contains(DataCommon.bonustypes, aComponents[j]) or aComponents[j] == 'all' or
                                     (isBasicSave and aComponents[j] == 'basic')) then
                                 -- Skip - testing save or SAVERESULT effect descriptors
+                                j=j;
                             elseif rEffectComp.type == 'SKILL' and
                                 (sSkillType == aComponents[j] or StringManager.contains(DataCommon.bonustypes, aComponents[j])) then
                                 -- This is a skill based effect - keep processing.
+                                j=j;
                             elseif (rEffectComp.type == 'PCROLL') then
                                 -- Skip filtering of PCROLL effects - we want to return all PCROLL effects.
+                                j=j;
                             elseif (rEffectComp.type == 'TRAIT') then
                                 -- Skip filtering of TRAIT effects - we want to return all TRAIT effects.
+                                j=j;
                             elseif StringManager.contains(DataCommon.proficiencyLevels, aComponents[j]) and sProficiency == aComponents[j] then
                                 -- Skip filtering of proficiency
+                                j=j;
                             elseif string.find(aComponents[j], '^dist%d+') then
                                 -- Skip filtering of distance if within distance
                                 -- Also skip if distance is not available - e.g. not using tokens on a map.
@@ -282,21 +294,25 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
                             end
                         end
 
-                        -- Do additional check for result level in aEffectOtherFilter - this means we have not matched the initial result level to the effect result level - we should not process any filters.
+                        -- Do additional check for result level in aEffectOtherFilter - this means we have not matched the initial result level to the effect result level
+                        -- - we should not process any filters.
                         if rEffectComp.type == 'SAVERESULT' or rEffectComp.type == 'SAVEDAMAGEPER' then
                             for _, sFilterString in pairs(aEffectOtherFilter) do
                                 if StringManager.contains(DataCommon.checkresultlevels, sFilterString) or sFilterString == 'basic' then
-                                    -- We have either a result level in the filter, or a basic save tag - means we should not process this effect as it hasn't matched the result level or is not a basic save.
+                                    -- We have either a result level in the filter, or a basic save tag - means we should not process this effect as it
+                                    -- hasn't matched the result level or is not a basic save.
                                     bProcessFilters = false;
                                     break
                                 end
                             end
                         end
 
-                        -- Do additional check for the proficiency level in aEffectOtherFilter - this means we have not matched the effect proficiency level to the action proficiency level - we should not process any filters.
+                        -- Do additional check for the proficiency level in aEffectOtherFilter - this means we have not matched the effect proficiency
+                        -- level to the action proficiency level - we should not process any filters.
                         for _, sFilterString in pairs(aEffectOtherFilter) do
                             if StringManager.contains(DataCommon.proficiencyLevels, sFilterString) then
-                                -- We have a proficiency level in the filter - means we should not process this effect as it hasn't matched the proficiency level in the earlier check.
+                                -- We have a proficiency level in the filter - means we should not process this effect as
+                                -- it hasn't matched the proficiency level in the earlier check.
                                 bProcessFilters = false;
                                 break
                             end
@@ -304,7 +320,8 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
 
                         -- Check for match
                         GlobalDebug.consoleObjects(
-                            'EffectManagerPFRPG2.getEffectsByType.  Effect components - checking for match. bProcessFilters, bTargetedOnly, bTargeted, rEffectComp, aEffectRangeFilter, aEffectOtherFilter = ',
+                            'EffectManagerPFRPG2.getEffectsByType.  Effect components - checking for match. bProcessFilters, bTargetedOnly, bTargeted, rEffectComp, ' ..
+                            'aEffectRangeFilter, aEffectOtherFilter = ',
                             bProcessFilters, bTargetedOnly, bTargeted, rEffectComp, aEffectRangeFilter, aEffectOtherFilter);
 
                         local comp_match = false;
@@ -343,7 +360,7 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
                                     if type(v2) == 'table' then
                                         if #v2 > 0 then
                                             local bOtherTableMatch = true;
-                                            for k3, v3 in pairs(v2) do
+                                            for _, v3 in pairs(v2) do
                                                 if not StringManager.contains(aEffectOtherFilter, v3) then
                                                     bOtherTableMatch = false;
                                                     break
@@ -386,16 +403,21 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
                         -- Do a final filter if aTraitFilter exists.
                         -- Currently only for saves.
                         --						if comp_match and rEffectComp.type == "SAVE" then
-                        --							GlobalDebug.consoleObjects("EffectManagerPFRPG2.getEffectsByType.  We have a saving throw - checking for effect descriptors that don't match with a bonus or save type.  These might be a trait descriptor.  aTraitFilter, rEffectComp.remainder = ", aTraitFilter, rEffectComp.remainder);
+                        --							GlobalDebug.consoleObjects("EffectManagerPFRPG2.getEffectsByType.  We have a saving throw - checking for effect descriptors
+                        --                              that don't match with a bonus or save type.
+                        --                              These might be a trait descriptor.  aTraitFilter, rEffectComp.remainder = ", aTraitFilter, rEffectComp.remainder);
                         --							local temp_match = true;
                         --							for _,sEffectDescriptor in ipairs(rEffectComp.remainder) do
-                        --								GlobalDebug.consoleObjects("EffectManagerPFRPG2.getEffectsByType.  Checking sEffectDescriptor for bonus or save type.  sEffectDescriptor = ", sEffectDescriptor);
-                        --								if StringManager.contains(DataCommon.bonustypes, sEffectDescriptor) or StringManager.contains(DataCommon.savetypes, sEffectDescriptor) or sEffectDescriptor == "all" then
+                        --								GlobalDebug.consoleObjects("EffectManagerPFRPG2.getEffectsByType.  Checking sEffectDescriptor for bonus or save type.
+                        --                                  sEffectDescriptor = ", sEffectDescriptor);
+                        --								if StringManager.contains(DataCommon.bonustypes, sEffectDescriptor) or StringManager.contains(DataCommon.savetypes, sEffectDescriptor)
+                        --                                 or sEffectDescriptor == "all" then
                         --									-- Skip - we have a valid bonus type or save name - already processed earlier.
                         --									GlobalDebug.consoleObjects("EffectManagerPFRPG2.getEffectsByType.  Matched to a bonus type or save name or all.  Skipping...");
                         --								else
                         --									-- We have at least one descriptor that isn't a bonus type or save name.  We now need to have a match.
-                        --									GlobalDebug.consoleObjects("EffectManagerPFRPG2.getEffectsByType.  We have at least one unassigned effect descriptor - assume this is a trait to match against.");
+                        --									GlobalDebug.consoleObjects("EffectManagerPFRPG2.getEffectsByType.  We have at least one unassigned effect descriptor -
+                        --                                      assume this is a trait to match against.");
                         --									temp_match = false;
                         --									if aTraitFilter then
                         --										if StringManager.contains(aTraitFilter, sEffectDescriptor) then
@@ -452,6 +474,7 @@ function customGetEffectsByType(rActor, sEffectType, aFilter, rFilterActor, bTar
 
     return results;
 end
+-- luacheck: pop
 -- Iterate through each effect
 
 function customHasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectTargets)
@@ -465,7 +488,7 @@ function customHasEffect(rActor, sEffect, rTarget, bTargetedOnly, bIgnoreEffectT
     -- Iterate through each effect
     local aEffectsDBNodes = TurboManager.getMatchedEffects(rActor, sEffect);
 
-    local sActorType, nodeActor = ActorManager.getTypeAndNode(rActor);
+    local _, nodeActor = ActorManager.getTypeAndNode(rActor);
 
     --	local aEffectsDBNodes = DB.getChildren(ActorManager.getCTNode(rActor), "effects");
     --	EffectManagerPFRPG2.hasEffect. sActorType, nodeActor = ", sActorType, nodeActor);
@@ -570,15 +593,15 @@ function customIsHiddenFromTarget(rActor, rTarget)
     end
 
     -- First check to see if rActor has a hidden effect - targeted or untargeted
-    local aEffectsDBNodes = ActorManager.getEffects(rActor);
-    local aMatch = {};
-    for _, v in pairs(aEffectsDBNodes) do
-        local nActive = DB.getValue(v, 'isactive', 0);
-        if nActive ~= 0 then
-            -- Parse each effect label
-            local sLabel = DB.getValue(v, 'label', '');
-        end
-    end
+    -- local aEffectsDBNodes = ActorManager.getEffects(rActor);
+    -- local aMatch = {};
+    -- for _, v in pairs(aEffectsDBNodes) do
+    --     local nActive = DB.getValue(v, 'isactive', 0);
+    --     if nActive ~= 0 then
+    --         -- Parse each effect label
+    --         local sLabel = DB.getValue(v, 'label', '');
+    --     end
+    -- end
 end
 
 function customHasEffectCondition(rActor, sEffect)
@@ -601,7 +624,7 @@ function customGetConditionValue(rActor, aEffectType, bModOnly, aFilter, rFilter
     -- START WITH AN EMPTY MODIFIER TOTAL
     local nTotalMod = 0;
 
-    for k, v in pairs(aEffectType) do
+    for _, v in pairs(aEffectType) do
         -- GET THE MODIFIERS FOR THIS MODIFIER TYPE
         local aEffectsByType = EffectManagerPFRPG2.getEffectsByType(rActor, v, aFilter, rFilterActor, bTargetedOnly, aTraitFilter);
         -- Return all bonuses and penalties.
@@ -610,7 +633,7 @@ function customGetConditionValue(rActor, aEffectType, bModOnly, aFilter, rFilter
         GlobalDebug.consoleObjects('EffectsManagerPFRPG2 - getMaxEffectsBonus.  After getEffectsByType - aEffectsByType = ', aEffectsByType);
 
         -- Iterate through each bonus and find the max.
-        for k2, v2 in pairs(aEffectsByType) do
+        for _, v2 in pairs(aEffectsByType) do
             if v2.mod > nTotalMod then
                 nTotalMod = v2.mod;
             end
@@ -636,7 +659,7 @@ function customGetConditionValueLowest(rActor, aEffectType, bModOnly, aFilter, r
     -- START WITH AN EMPTY MODIFIER TOTAL
     local nTotalMod = 999;
 
-    for k, v in pairs(aEffectType) do
+    for _, v in pairs(aEffectType) do
         -- GET THE MODIFIERS FOR THIS MODIFIER TYPE
         local aEffectsByType = EffectManagerPFRPG2.getEffectsByType(rActor, v, aFilter, rFilterActor, bTargetedOnly, aTraitFilter);
         -- Return all bonuses and penalties.
@@ -645,7 +668,7 @@ function customGetConditionValueLowest(rActor, aEffectType, bModOnly, aFilter, r
         GlobalDebug.consoleObjects('EffectsManagerPFRPG2.getConditionValueLowest.  After getEffectsByType - aEffectsByType = ', aEffectsByType);
 
         -- Iterate through each bonus and find the max.
-        for k2, v2 in pairs(aEffectsByType) do
+        for _, v2 in pairs(aEffectsByType) do
             if v2.mod < nTotalMod then
                 nTotalMod = v2.mod;
             end
@@ -660,9 +683,11 @@ end
 
 function customGetEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly, aTraitFilter, bReturnBonusesAndPenalties)
     -- bReturnBonusesAndPenalties added to allow separate return of bonus and penalties - so that other effects can adjust the maximum bonus or worst penalty.
-    -- This is because PFRPG2 treats bonuses and penalties of the same type as separate - bonuses don't stack, penalties don't stack, but they don't adjust the max bonus or max penalty.
+    -- This is because PFRPG2 treats bonuses and penalties of the same type as separate - bonuses don't stack, penalties
+    -- don't stack, but they don't adjust the max bonus or max penalty.
     GlobalDebug.consoleObjects(
-        'EffectManagerPFRPG2.getEffectsBonusByType.  Starting - rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly, aTraitFilter, bReturnBonusesAndPenalties = ',
+        'EffectManagerPFRPG2.getEffectsBonusByType.  Starting - rActor, aEffectType, bAddEmptyBonus, aFilter, ' ..
+        'rFilterActor, bTargetedOnly, aTraitFilter, bReturnBonusesAndPenalties = ',
         rActor, aEffectType, bAddEmptyBonus, aFilter, rFilterActor, bTargetedOnly, aTraitFilter, bReturnBonusesAndPenalties);
     if not rActor or not aEffectType then
         if bReturnBonusesAndPenalties then
@@ -685,13 +710,13 @@ function customGetEffectsBonusByType(rActor, aEffectType, bAddEmptyBonus, aFilte
 
     GlobalDebug.consoleObjects('EffectManagerPFRPG2.getEffectsBonusByType.  aEffectType = ', aEffectType);
 
-    for k, v in pairs(aEffectType) do
+    for _, v in pairs(aEffectType) do
         -- LOOK FOR EFFECTS THAT MATCH BONUSTYPE
         local aEffectsByType = EffectManagerPFRPG2.getEffectsByType(rActor, v, aFilter, rFilterActor, bTargetedOnly, aTraitFilter);
         GlobalDebug.consoleObjects('EffectManagerPFRPG2.getEffectsBonusByType.  aEffectsByType = ', aEffectsByType);
 
         -- ITERATE THROUGH EFFECTS THAT MATCHED
-        for k2, v2 in pairs(aEffectsByType) do
+        for _, v2 in pairs(aEffectsByType) do
             -- LOOK FOR ENERGY OR BONUS TYPES
             local dmg_type = nil;
             local mod_type = nil;

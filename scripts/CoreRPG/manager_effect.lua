@@ -2,6 +2,8 @@
 --	  	Copyright © 2023
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
+--
+-- luacheck: globals onInit onClose customGetEffectsByType customHasEffect  customRegisterEffectCompType
 local registerEffectCompType = nil;
 local getEffectsByType = nil;
 local hasEffect = nil;
@@ -50,7 +52,7 @@ function customGetEffectsByType(rActor, sEffectCompType, rFilterActor, bTargeted
 
         if bActive then
             -- If effect type we are looking for supports targets, then check targeting
-            local bTargetMatch = false;
+            local bTargetMatch;
             if tEffectCompParams.bIgnoreTarget then
                 bTargetMatch = true;
             else

@@ -2,6 +2,11 @@
 --	  	Copyright © 2023
 --	  	This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 --	  	https://creativecommons.org/licenses/by-sa/4.0/
+--
+-- luacheck: globals TurboManager _aTurboIgnoreTags onTabletopInit
+-- luacheck: globals addCombatEffect unregisterCombatant registerEffect updateRegisteredEffect unregisterEffect setCustomEffectAdded removeCustomEffectAdded
+-- luacheck: globals setCustomEffectUpdatedPrevious removeCustomEffectUpdatedPrevious setCustomEffectUpdatedCurrent removeCustomEffectUpdatedCurrent
+-- luacheck: globals setCustomEffectDeleted removeCustomEffectDeleted toggleTurbo getMatchedEffects getRulesetEffectManager turboTest
 -- The only way this will ever work is if we are very sure that we keep our
 -- tables up to date with the known state of the universe. If they get out of sync
 -- then the entire house of cards comes crashing down.
@@ -321,10 +326,6 @@ function turboTest()
     local aCombatNodes = CombatManager.getCombatantNodes();
     if next(aCombatNodes) then
         local nodeCT = ActorManager.getCTNode(aCombatNodes[1]);
-        for _, node in pairs(aCombatNodes) do
-            nodeCT = node;
-            break
-        end
         local rEffect = {sUnits = '', nDuration = 0, nInit = 0, sName = 'XDMQPVZ:1', sApply = 'action', sSource = '', nGMOnly = 1};
         EffectManager.addEffect('', '', nodeCT, rEffect, false);
         local rActor = ActorManager.resolveActor(nodeCT);
